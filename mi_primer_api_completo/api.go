@@ -20,19 +20,17 @@ var items []Item
 
 func main() {
 	for i := 1; i <= 10; i++ {
-		items = append(items, Item{ID: fmt.Sprintf("item%d", i), Name: fmt.Sprintf("Item %d", i)})
+		items = append(items, Item{ID: fmt.Sprintf("%d", i), Name: fmt.Sprintf("Item %d", i)})
 	}
-
-	items = append(items, Item{ID: fmt.Sprintf("item%d", 11), Name: fmt.Sprintf("Item %d", 1)})
 
 	router := mux.NewRouter()
 	router.HandleFunc("/", indexRoute).Methods("GET")
 	router.HandleFunc("/items", getItems).Methods("GET")
-	router.HandleFunc("/items/id/{id}", getItemID).Methods("GET")
-	router.HandleFunc("/items/id/{name}", getItemName).Methods("GET")
+	router.HandleFunc("/items/{id}", getItemID).Methods("GET")
+	router.HandleFunc("/items/{name}", getItemName).Methods("GET")
 	router.HandleFunc("/items", createItem).Methods("POST")
-	router.HandleFunc("/items/id/{id}", updateItem).Methods("PUT")
-	router.HandleFunc("/items/id/{id}", deleteItem).Methods("DELETE")
+	router.HandleFunc("/items/{id}", updateItem).Methods("PUT")
+	router.HandleFunc("/items/{id}", deleteItem).Methods("DELETE")
 
 	var portNumber int = 3000
 	fmt.Println("Listen in port ", portNumber)
@@ -64,9 +62,7 @@ func getItemID(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-
-	fmt.Fprintf(w, "User not found")
-	json.NewEncoder(w).Encode(&Item{})
+	json.NewEncoder(w).Encode("Item not found")
 }
 
 // Función para buscar un elemento por nombre
@@ -80,8 +76,7 @@ func getItemName(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	fmt.Fprintf(w, "User not found")
-	json.NewEncoder(w).Encode(&Item{})
+	json.NewEncoder(w).Encode("Item not found")
 }
 
 // Función para crear un nuevo elemento
@@ -104,7 +99,6 @@ func createItem(w http.ResponseWriter, r *http.Request) {
 	items = append(items, newItem)
 
 	w.WriteHeader(http.StatusCreated)
-	//Respondo con el item que acabo de crear
 	json.NewEncoder(w).Encode(newItem)
 	fmt.Println("Item successfully created")
 }
@@ -130,7 +124,7 @@ func updateItem(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	w.WriteHeader(http.StatusCreated)
+	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(updatedItem)
 	fmt.Println("The item has been updated successfully")
 }
