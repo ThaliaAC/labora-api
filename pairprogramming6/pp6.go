@@ -17,14 +17,12 @@ type Item struct {
 }
 
 func raiz(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("Estás en la ruta raiz")
+	fmt.Fprintf(w, "Estás en la ruta raiz")
 }
 func getItems(w http.ResponseWriter, r *http.Request) {
-	// Establecemos el encabezado "Content-Type" de la respuesta HTTP como "application/json"
 	w.Header().Set("Content-Type", "application/json")
 	pageUser := r.URL.Query().Get("page")
 	itemsUser := r.URL.Query().Get("itemsPerPage")
-	// Convertir los parámetros a enteros
 	page, err := strconv.Atoi(pageUser)
 	if err != nil {
 		page = 1
@@ -33,8 +31,9 @@ func getItems(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		itemsPerPage = 10
 	}
+
 	inicio := (page - 1) * itemsPerPage
-	// Obtener los elementos del slice que corresponden a la página solicitada
+
 	var resultado []Item
 	if inicio >= 0 && inicio < len(items) {
 		final := inicio + itemsPerPage
@@ -43,13 +42,12 @@ func getItems(w http.ResponseWriter, r *http.Request) {
 		}
 		resultado = items[inicio:final]
 	}
-	// Función para obtener todos los elementos
+
 	json.NewEncoder(w).Encode(resultado)
 }
+
 func getItemId(w http.ResponseWriter, r *http.Request) {
-	// Establecemos el encabezado "Content-Type" de la respuesta HTTP como "application/json"
 	w.Header().Set("Content-Type", "application/json")
-	// Función para obtener un elemento específico
 	parametros := mux.Vars(r)
 	for _, item := range items {
 		if item.ID == parametros["id"] {
@@ -57,31 +55,22 @@ func getItemId(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	fmt.Fprintf(w, "Usuario no encontrado")
-	json.NewEncoder(w).Encode(&Item{})
+	json.NewEncoder(w).Encode("Item no encontrado")
 }
+
 func getItemName(w http.ResponseWriter, r *http.Request) {
-	// Establecemos el encabezado "Content-Type" de la respuesta HTTP como "application/json"
 	w.Header().Set("Content-Type", "application/json")
-	// Función para obtener un elemento específico
 	parametros := mux.Vars(r)
-	var itemsIguales []Item
-	count := 0
 	for _, item := range items {
 		if strings.EqualFold(item.Name, parametros["name"]) {
-			itemsIguales = append(itemsIguales, item)
-			count++
+			json.NewEncoder(w).Encode(item)
+			return
 		}
 	}
-	if count > 1 {
-		json.NewEncoder(w).Encode(itemsIguales)
-		return
-	}
-	fmt.Fprintf(w, "Usuario no encontrado")
-	json.NewEncoder(w).Encode(&Item{})
+	json.NewEncoder(w).Encode("Item no encontrado")
 }
 func createItem(w http.ResponseWriter, r *http.Request) {
-	// Función para crear un nuevo elemento
+	w.Header().Set("Content-Type", "application/json")
 	var newItem Item
 	rqBody, err := ioutil.ReadAll(r.Body)
 	if err != nil {
@@ -90,18 +79,15 @@ func createItem(w http.ResponseWriter, r *http.Request) {
 	}
 	json.Unmarshal(rqBody, &newItem)
 	id := len(items) + 1
-	// Agregar el nuevo elemento al slice
 	newItem.ID = "item" + strconv.Itoa(id)
 	items = append(items, newItem)
-	// Enviar una respuesta exitosa al cliente
-	// Establecemos el encabezado "Content-Type" de la respuesta HTTP como "application/json"
-	w.Header().Set("Content-Type", "application/json")
+
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(newItem)
-	fmt.Println("¡Item creadoexitosamente!")
+	fmt.Println("Item creado exitosamente")
 }
 func updateItem(w http.ResponseWriter, r *http.Request) {
-	// Función para actualizar un elemento existente
+	w.Header().Set("Content-Type", "application/json")
 	var UpdateItem Item
 	parametros := mux.Vars(r)
 	rqBody, err := ioutil.ReadAll(r.Body)
@@ -109,7 +95,9 @@ func updateItem(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "Inserte un item válido")
 		return
 	}
+
 	json.Unmarshal(rqBody, &UpdateItem)
+
 	for i, item := range items {
 		if item.ID == parametros["id"] {
 			items = append(items[:i], items[i+1:]...)
@@ -117,47 +105,44 @@ func updateItem(w http.ResponseWriter, r *http.Request) {
 			items = append(items, UpdateItem)
 		}
 	}
-	// Enviar una respuesta exitosa al cliente
-	// Establecemos el encabezado "Content-Type" de la respuesta HTTP como "application/json"
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
+
+	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(UpdateItem)
-	fmt.Println("¡Item actualizado!")
+	fmt.Println("Item actualizado")
 }
 func deleteItem(w http.ResponseWriter, r *http.Request) {
-	// Establecemos el encabezado "Content-Type" de la respuesta HTTP como "application/json"
 	w.Header().Set("Content-Type", "application/json")
-	// Función para eliminar un elemento
 	parametros := mux.Vars(r)
 	for i, item := range items {
 		if item.ID == parametros["id"] {
 			items = append(items[:i], items[i+1:]...)
-			fmt.Fprintf(w, "La tarea con el ID %d fue eliminada", item.ID)
+			json.NewEncoder(w).Encode("El Item fue eliminado exitosamente")
 			return
 		}
 	}
-	fmt.Fprintf(w, "Usuario no encontrado")
+	_, err := strconv.Atoi(parametros["id"])
+	if err != nil {
+		fmt.Println("ID inválido")
+		return
+	}
 }
 
-// var items = []Item{{ID:   "1",Name: "Juana",},{ID:   "2",Name: "Mario",},{ID:   "3",Name: "Paola",},{ID:   "4",Name: "Luis",},
-// {ID:   "5",Name: "Isabella",},{ID:   "6",Name: "Jose",},{ID:   "7",Name: "Elena",},{ID:   "8",Name: "Pedro",},{ID:   "9",
-// Name: "Laura",},{ID:   "10",Name: "Samuel",},}
 var items []Item
 
 func main() {
 	for i := 1; i <= 10; i++ {
-		items = append(items, Item{ID: fmt.Sprintf("item%d", i), Name: fmt.Sprintf("Item %d", i)})
+		items = append(items, Item{ID: fmt.Sprintf("%d", i), Name: fmt.Sprintf("Item %d", i)})
 	}
-	items = append(items, Item{ID: fmt.Sprintf("item%d", 11), Name: fmt.Sprintf("Item %d", 1)})
+
 	router := mux.NewRouter()
 	router.HandleFunc("/", raiz).Methods("GET")
 	router.HandleFunc("/items", getItems).Methods("GET")
-	router.HandleFunc("/items/id/{id}", getItemId).Methods("GET")
-	router.HandleFunc("/items/name/{name}", getItemName).Methods("GET")
+	router.HandleFunc("/items/{id}", getItemId).Methods("GET")
+	router.HandleFunc("/items/{name}", getItemName).Methods("GET")
 	router.HandleFunc("/items", createItem).Methods("POST")
 	router.HandleFunc("/items/{id}", updateItem).Methods("PUT")
 	router.HandleFunc("/items/{id}", deleteItem).Methods("DELETE")
-	var portNumber int = 9999
+	var portNumber int = 3000
 	fmt.Println("Listen in port ", portNumber)
 	err := http.ListenAndServe(":"+strconv.Itoa(portNumber), router)
 	if err != nil {
