@@ -31,9 +31,9 @@ func GetUsersDb() ([]model.Item, error) {
 }
 
 func GetUserById(id int) *model.Item {
-	row := db.Db.QueryRow("SELECT id, customer_name, order_date, product, quantity, price FROM items WHERE id = $1", id)
+	row := db.Db.QueryRow("SELECT id, customer_name, order_date, product, quantity, price, details FROM items WHERE id = $1", id)
 	var item model.Item
-	err := row.Scan(&item.ID, &item.CustomerName, &item.OrderDate, &item.Product, &item.Quantity, &item.Price)
+	err := row.Scan(&item.ID, &item.CustomerName, &item.OrderDate, &item.Product, &item.Quantity, &item.Price, &item.Details)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -45,9 +45,9 @@ func GetUserById(id int) *model.Item {
 }
 
 func GetUserByName(customerName string) *model.Item {
-	row := db.Db.QueryRow("SELECT id, customer_name, order_date, product, quantity, price FROM items WHERE customerName = $1", customerName)
+	row := db.Db.QueryRow("SELECT id, customer_name, order_date, product, quantity, price, details FROM items WHERE customerName = $1", customerName)
 	var item model.Item
-	err := row.Scan(&item.ID, &item.CustomerName, &item.OrderDate, &item.Product, &item.Quantity, &item.Price)
+	err := row.Scan(&item.ID, &item.CustomerName, &item.OrderDate, &item.Product, &item.Quantity, &item.Price, &item.Details)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -59,7 +59,6 @@ func GetUserByName(customerName string) *model.Item {
 }
 
 /*func CreateItem() {
-
 }*/
 
 func UpdateUser(id int, item model.Item) (model.Item, error) {

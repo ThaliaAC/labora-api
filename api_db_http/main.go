@@ -9,7 +9,7 @@ import (
 )
 
 func main() {
-	db.ConnectToDb(db.Db)
+	db.ConnectToDb()
 	router := mux.NewRouter()
 
 	router.HandleFunc("/", handler.IndexRoute).Methods("GET")

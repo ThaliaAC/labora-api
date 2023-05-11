@@ -18,12 +18,12 @@ const (
 
 var Db *sql.DB
 
-func ConnectToDb(database *sql.DB) (*sql.DB, error) {
+func ConnectToDb() (*sql.DB, error) {
 	psqlInfo := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable", host, port, user, password, dbName)
 	dbConn, dbErr := sql.Open("postgres", psqlInfo)
 	if dbErr != nil {
 		log.Fatal(dbErr)
 	}
-	defer dbConn.Close()
+	Db = dbConn
 	return dbConn, dbErr
 }
