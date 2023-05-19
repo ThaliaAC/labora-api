@@ -1,0 +1,4 @@
+mode: set
+factorial/factorial.go:3.31,4.12 1 1
+factorial/factorial.go:4.12,6.3 1 1
+factorial/factorial.go:7.2,7.27 1 1
