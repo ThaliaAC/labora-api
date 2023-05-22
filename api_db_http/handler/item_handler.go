@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"strconv"
 
@@ -21,7 +20,12 @@ func IndexRoute(w http.ResponseWriter, r *http.Request) {
 
 func GetItemsHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	items, _ := service.GetItemsDb()
+	items, err := service.GetItemsDb()
+	if err != nil {
+		w.WriteHeader(http.StatusNotFound)
+		json.NewEncoder(w).Encode(err)
+		return
+	}
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(items)
 }
@@ -31,25 +35,27 @@ func GetItemsByIdHandler(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	idInput, idErr := strconv.Atoi(params["id"])
 	if idErr != nil {
-		log.Fatal(idErr)
+		w.WriteHeader(http.StatusNotFound)
+		json.NewEncoder(w).Encode(idErr)
+		return
 	}
 
-	item := service.GetItemsById(idInput)
-	if item == nil {
-		json.NewEncoder(w).Encode("Item not found")
-	}
-	w.WriteHeader(http.StatusOK)
+	item, idErr := service.GetItemsById(idInput)
+
+	w.WriteHeader(http.StatusFound)
 	json.NewEncoder(w).Encode(item)
 }
 
 func GetItemsByNameHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	params := mux.Vars(r)
-	item := service.GetItemsByName(params["customerName"])
-	if item == nil {
-		json.NewEncoder(w).Encode("Item not found")
+	item, nameErr := service.GetItemsByName(params["customerName"])
+	if nameErr != nil {
+		w.WriteHeader(http.StatusNotFound)
+		json.NewEncoder(w).Encode(nameErr)
+		return
 	}
-	w.WriteHeader(http.StatusOK)
+	w.WriteHeader(http.StatusFound)
 	json.NewEncoder(w).Encode(item)
 }
 
@@ -58,17 +64,15 @@ func CreateItemHandler(w http.ResponseWriter, r *http.Request) {
 	var newItem model.Item
 	reqBody, err := io.ReadAll(r.Body)
 	if err != nil {
-		fmt.Fprintf(w, "Insert a Valid Customer")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(err)
 		return
 	}
 
 	json.Unmarshal(reqBody, &newItem)
 
 	err = service.CreateItem(newItem)
-	if err != nil {
-		fmt.Fprintf(w, "Enter Valid Data")
-		return
-	}
+
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(newItem)
 	fmt.Println("Customer successfully created")
@@ -78,7 +82,9 @@ func UpdateItemHandler(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	idInput, idErr := strconv.Atoi(params["id"])
 	if idErr != nil {
-		log.Fatal(idErr)
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(idErr)
+		return
 	}
 	var updatedItem model.Item
 	reqBody, err := io.ReadAll(r.Body)
@@ -91,7 +97,8 @@ func UpdateItemHandler(w http.ResponseWriter, r *http.Request) {
 
 	finalOutput, errOutput := service.UpdateItem(idInput, updatedItem)
 	if errOutput != nil {
-		fmt.Fprintf(w, "Enter Valid Data")
+		w.WriteHeader(http.StatusNotModified)
+		json.NewEncoder(w).Encode(errOutput)
 		return
 	}
 	for index, item := range items {
@@ -111,7 +118,9 @@ func DeleteItemHandler(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	idInput, idErr := strconv.Atoi(params["id"])
 	if idErr != nil {
-		log.Fatal(idErr)
+		w.WriteHeader(http.StatusNotFound)
+		json.NewEncoder(w).Encode(idErr)
+		return
 	}
 	err := service.DeleteItem(idInput)
 	if err != nil {

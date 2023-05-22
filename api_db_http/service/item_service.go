@@ -1,12 +1,15 @@
 package service
 
 import (
-	"fmt"
+	"database/sql"
+	"errors"
 	"log"
 
 	"github.com/ThaliaAC/labora-api/api_db_http/db"
 	"github.com/ThaliaAC/labora-api/api_db_http/model"
 )
+
+var ErrNoMatch = errors.New("no matching record")
 
 func GetItemsDb() ([]model.Item, error) {
 	items := make([]model.Item, 0)
@@ -31,33 +34,29 @@ func GetItemsDb() ([]model.Item, error) {
 	return items, nil
 }
 
-func GetItemsById(id int) *model.Item {
+func GetItemsById(id int) (*model.Item, error) {
 	var item model.Item
 	row := db.Db.QueryRow("SELECT id, customer_name, order_date, product, quantity, price, details FROM items WHERE id = $1", id)
 	err := row.Scan(&item.ID, &item.CustomerName, &item.OrderDate, &item.Product, &item.Quantity, &item.Price, &item.Details)
 
-	if err != nil {
-		fmt.Println(err)
+	if err == sql.ErrNoRows {
+		return nil, ErrNoMatch
+	} else if err != nil {
+		return nil, err
 	}
-	err = row.Err()
-	if err != nil {
-		fmt.Println(err)
-	}
-	return &item
+	return &item, nil
 }
 
 func GetItemsByName(customerName string) *model.Item {
 	row := db.Db.QueryRow("SELECT id, customer_name, order_date, product, quantity, price, details FROM items WHERE customer_name = $1", customerName)
 	var item model.Item
 	err := row.Scan(&item.ID, &item.CustomerName, &item.OrderDate, &item.Product, &item.Quantity, &item.Price, &item.Details)
-	if err != nil {
-		log.Fatal(err)
+	if err == sql.ErrNoRows {
+		return nil, ErrNoMatch
+	} else if err != nil {
+		return nil, err
 	}
-	err = row.Err()
-	if err != nil {
-		log.Fatal(err)
-	}
-	return &item
+	return &item, nil
 }
 
 func CreateItem(item model.Item) error {

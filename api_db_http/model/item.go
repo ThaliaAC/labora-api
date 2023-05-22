@@ -10,6 +10,11 @@ type Item struct {
 	OrderDate    time.Time `json:"orderDate"`
 	Product      string    `json:"product"`
 	Quantity     int       `json:"quantity"`
-	Price        float32   `json:"price"`
+	Price        int       `json:"price"`
 	Details      string    `json:"details,omitempty"`
+}
+
+func (item Item) TotalPrice() int {
+	totalPrice := item.Price * item.Quantity
+	return totalPrice
 }
