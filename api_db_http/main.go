@@ -1,10 +1,12 @@
 package main
 
 import (
+	"log"
 	"net/http"
 
 	"github.com/ThaliaAC/labora-api/api_db_http/db"
 	"github.com/ThaliaAC/labora-api/api_db_http/handler"
+	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 )
 
@@ -20,5 +22,10 @@ func main() {
 	router.HandleFunc("/items/{id}", handler.UpdateItemHandler).Methods("PUT")
 	router.HandleFunc("/items/{id}", handler.DeleteItemHandler).Methods("DELETE")
 
-	http.ListenAndServe(":9000", router)
+	corsOption1 := handlers.AllowedOrigins([]string{"*"})
+	corsOption2 := handlers.AllowedMethods([]string{"POST"})
+
+	handler := handlers.CORS(corsOption1, corsOption2)(router)
+
+	log.Fatal(http.ListenAndServe(":9000", handler))
 }
