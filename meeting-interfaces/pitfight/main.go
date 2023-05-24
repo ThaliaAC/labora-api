@@ -1,15 +1,38 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"math/rand"
+	"os"
+	"strings"
 
 	"time"
 
 	"github.com/ThaliaAC/labora-api/meeting-interfaces/fighters"
 )
 
+const col = 20
+
+func drawBarUntil(cond func(t int) bool, valueEnteredSignal chan int) int {
+	bar := fmt.Sprintf("[%%-%vs]", col)
+	var t int = 0
+	for cond(t) {
+		fmt.Print("\033[H\033[2J")
+		fmt.Printf(bar, strings.Repeat("=", t%col)+"🤜🏼")
+
+		time.Sleep(20 * time.Millisecond)
+
+		t++
+	}
+	valueEnteredSignal <- t % col
+	return t % col
+}
+
 func main() {
+	scanner := bufio.NewScanner(os.Stdin)
+	var valueEnteredSignal chan int = make(chan int)
+
 	var police fighters.Police = fighters.Police{
 		BaseFighter: fighters.BaseFighter{
 			Life: 10,
@@ -23,7 +46,7 @@ func main() {
 	}
 	var paladin fighters.Paladin = fighters.Paladin{
 		BaseFighter: fighters.BaseFighter{
-			Life: 20,
+			Life: 10,
 		},
 	}
 
@@ -41,37 +64,49 @@ func main() {
 	var areAllAlive = police.IsAlive() && criminal.IsAlive() && paladin.IsAlive()
 	for areAllAlive {
 		randomOrderOfFighter := rand.Intn(3)
-		intensity := contenders[randomOrderOfFighter].ThrowAttack()
+		var intensity float64 = float64(contenders[randomOrderOfFighter].ThrowAttack())
+
+		wasEnterPressed := false
+		go drawBarUntil(func(t int) bool {
+			return !wasEnterPressed
+		}, valueEnteredSignal)
+
+		scanner.Scan()
+		wasEnterPressed = true
+		var value float64 = float64(<-valueEnteredSignal)
+
+		intensity = intensity * (value / col)
+
 		randomDirectionAttack := rand.Intn(2)
 		var recieverFighter string
 		if randomDirectionAttack == 0 { //Atack to the right
 			if randomOrderOfFighter == len(contenders)-1 {
-				contenders[0].RecieveAttack(intensity)
+				contenders[0].RecieveAttack(int(intensity))
 				recieverFighter = contenders[0].GetName()
 			} else if randomOrderOfFighter == len(contenders)-2 {
-				contenders[2].RecieveAttack(intensity)
+				contenders[2].RecieveAttack(int(intensity))
 				recieverFighter = contenders[2].GetName()
 			} else {
-				contenders[1].RecieveAttack(intensity)
+				contenders[1].RecieveAttack(int(intensity))
 				recieverFighter = contenders[1].GetName()
 			}
 		} else { //Atack to the left
 			if randomOrderOfFighter == len(contenders)-1 {
-				contenders[1].RecieveAttack(intensity)
+				contenders[1].RecieveAttack(int(intensity))
 				recieverFighter = contenders[1].GetName()
 			} else if randomOrderOfFighter == len(contenders)-2 {
-				contenders[0].RecieveAttack(intensity)
+				contenders[0].RecieveAttack(int(intensity))
 				recieverFighter = contenders[0].GetName()
 			} else {
-				contenders[2].RecieveAttack(intensity)
+				contenders[2].RecieveAttack(int(intensity))
 				recieverFighter = contenders[2].GetName()
 			}
 		}
 
-		fmt.Println(contenders[randomOrderOfFighter].GetName(), "throw punch with intensity", intensity, "to", recieverFighter)
+		fmt.Printf("%s throw a punch with intensity %.2f to %s\n", contenders[randomOrderOfFighter].GetName(), intensity, recieverFighter)
 		fmt.Printf("PoliceLife = %d, CriminalLife = %d, PaladinLife = %d\n", police.Life, criminal.Life, paladin.Life)
 		areAllAlive = police.IsAlive() && criminal.IsAlive() && paladin.IsAlive()
-		time.Sleep(1 * time.Second)
+		time.Sleep(2 * time.Second)
 	}
 }
 

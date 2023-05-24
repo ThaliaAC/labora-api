@@ -23,7 +23,7 @@ func main() {
 	router.HandleFunc("/item/{id}", handler.DeleteItemHandler).Methods("DELETE")
 
 	corsOptions := cors.New(cors.Options{
-		AllowedOrigins: []string{"http://localhost:9000/"},
+		AllowedOrigins: []string{"http://localhost:3000/"},
 		AllowedMethods: []string{"PUT"},
 	})
 	handler := corsOptions.Handler(router)

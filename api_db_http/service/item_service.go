@@ -47,7 +47,7 @@ func GetItemsById(id int) (*model.Item, error) {
 	return &item, nil
 }
 
-func GetItemsByName(customerName string) *model.Item {
+func GetItemsByName(customerName string) (*model.Item, error) {
 	row := db.Db.QueryRow("SELECT id, customer_name, order_date, product, quantity, price, details FROM items WHERE customer_name = $1", customerName)
 	var item model.Item
 	err := row.Scan(&item.ID, &item.CustomerName, &item.OrderDate, &item.Product, &item.Quantity, &item.Price, &item.Details)
