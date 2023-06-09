@@ -22,7 +22,7 @@ func GetItemsHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	items, err := service.GetItemsDb()
 	if err != nil {
-		w.WriteHeader(http.StatusNotFound)
+		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(err)
 		return
 	}
@@ -40,7 +40,7 @@ func GetItemsByIdHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	item, idErr := service.GetItemsById(idInput)
+	item, _ := service.GetItemsById(idInput)
 
 	w.WriteHeader(http.StatusFound)
 	json.NewEncoder(w).Encode(item)
@@ -71,7 +71,7 @@ func CreateItemHandler(w http.ResponseWriter, r *http.Request) {
 
 	json.Unmarshal(reqBody, &newItem)
 
-	err = service.CreateItem(newItem)
+	_ = service.CreateItem(newItem)
 
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(newItem)
